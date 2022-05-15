@@ -353,42 +353,6 @@ void scanSym(FILE* in, unsigned char* sym, unsigned char bitCounter, unsigned ch
 	}
 }
 
-//void createDecodingTree(FILE* in, sTree* t, sTree* ancestor, unsigned char countOfDifSym, unsigned char* bitCounter, unsigned char* byte, char direction) {
-//	unsigned char bit = 0;
-//	if (countOfDifSym == 0) {
-//		return;
-//	}
-//	if (*bitCounter == 8) {
-//		fread(byte, 1, 1, in);
-//		*bitCounter = 0;
-//	}
-//	bit = (*byte >> (7 - *bitCounter)) & 1;
-//	(*bitCounter)++;
-//	if (t == NULL) {
-//		sTree* node = (sTree*)malloc(sizeof(sTree));
-//		node->left = NULL;
-//		node->right = NULL;
-//		t = node;
-//		if (direction == LEFT)
-//			ancestor->left = t;
-//		else
-//			ancestor->right = t;
-//	}
-//	if (bit == 0)
-//		t->value = NOTNODE;
-//	else {
-//		unsigned char sym = 0;
-//		scanSym(in, &sym, *bitCounter, byte);
-//		t->value = sym;
-//		countOfDifSym--;
-//		return;
-//	}
-//
-//	createDecodingTree(in, t->left, t, countOfDifSym, bitCounter, byte, LEFT);
-//
-//	createDecodingTree(in, t->right, t, countOfDifSym, bitCounter, byte, RIGHT);
-//}
-
 void crtDT(FILE* in, sTree* t, sTree* ancestor, unsigned char* countOfDifSym, unsigned char* bitCounter, unsigned char* byte, char direction, bool startFlag) {
 	if (!startFlag) {
 		if (*countOfDifSym == 0)
