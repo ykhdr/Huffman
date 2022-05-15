@@ -1,6 +1,8 @@
 input.bin
 input.bin.bak
 output.bin
+output.bin.bak
+outoutput.bin.bak
 outoutput.bin
 Huffman.vcxproj.user
 Huffman.vcxproj.filters

@@ -247,7 +247,7 @@ unsigned char printInfoAboutCoding(FILE* out, unsigned char  difSym, unsigned ch
 	unsigned char bitBuffer = 0;
 	unsigned char bitCounter = 0;
 	unsigned char countDifSym = 0;
-	for (char i = 1; countDifSym != difSym; i++) {
+	for (int i = 1; countDifSym != difSym; i++) {
 		if (TreeRecration[i] == '1') {
 			i++;
 			bitBuffer |= 1;
@@ -317,7 +317,7 @@ void printEncodedMessage(FILE* in, FILE* out, sEncode* EncodedValues, int lenght
 	}
 	if (bitCounter == 8)
 		fwrite(&bitBuffer, sizeof(unsigned char), 1, out);
-	fwrite(&bitCounter, sizeof(unsigned char), 1, out); // 
+	fwrite(&bitCounter, sizeof(unsigned char), 1, out);
 }
 
 void print(FILE* in, FILE* out, sEncode* EncodedValues, int lenght, unsigned char TreeRecration[], unsigned char difSym) {
@@ -374,8 +374,6 @@ void crtDT(FILE* in, sTree* t, sTree* ancestor, unsigned char* bitCounter, unsig
 			unsigned char sym = 0;
 			scanSym(in, &sym, *bitCounter, byte);
 			t->value = sym;
-			/*if (*bitCounter == 8)
-				*bitCounter = 0;*/
 			return;
 		}
 	}
@@ -392,19 +390,11 @@ sTree* createStartDecodingTree() {
 	return head;
 }
 
-sTree* fixTree(sTree* head) {
-	sTree* buff = head;
-	head = head->left;
-	free(buff);
-	return head;
-}
-
 sTree* treeRestoration(FILE* in, unsigned char* bitCounter, long* pos) {
 	sTree* head = createStartDecodingTree();
 	unsigned char byte = 0;
 	fread(&byte, 1, 1, in);
 	crtDT(in, head, head, bitCounter, &byte, LEFT, true);
-	//head = fixTree(head);
 	*pos = ftell(in) - 1;
 	return head;
 }
@@ -420,7 +410,7 @@ unsigned char findStartOfStartByte(FILE* in, unsigned char bitStart) {
 void printDecodeMessage(FILE* in, FILE* out, sTree* head, long startPos, long endPos, unsigned char bitStart, unsigned char lenghtOfLastBit) {
 	unsigned char byte = 0;
 	unsigned char bit = 0;
-
+	bool flag = true;
 	sTree* buffHead = head;
 	for (int i = startPos; i < endPos; i++) {
 		unsigned char byteLenght = 8;
@@ -441,16 +431,23 @@ void printDecodeMessage(FILE* in, FILE* out, sTree* head, long startPos, long en
 				break;
 			}
 			if (buffHead->value != NOTNODE) {
-				fwrite(&buffHead->value,1, 1, out);
+				fwrite(&buffHead->value, 1, 1, out);
 				buffHead = head;
 			}
 			bit = 0;
-		}
 
+		}
+		flag = false;
 	}
 	if (lenghtOfLastBit > 0) {
-		fread(&byte, 1, 1, in);
-		for (int i = 0; i < lenghtOfLastBit; i++) {
+		int i = 0;
+		if (endPos == startPos) {
+			byte = findStartOfStartByte(in, bitStart);
+			i = startPos;
+		}
+		else
+			fread(&byte, 1, 1, in);
+		for (; i < lenghtOfLastBit; i++) {
 			bit |= (byte >> 7 - i) & 1;
 			switch (bit) {
 			case 0:
@@ -529,7 +526,7 @@ void decodeMessage() {
 	fillStreamForDecoding(&stream);
 	sTree* head = treeRestoration(stream.in, &bitCounter, &pos);
 	scanAndPrintDecodeMessage(stream.in, stream.out, head, pos, bitCounter);
-
+	freeTree(head);
 }
 
 ///////////////////////////////////////// MAIN ///////////////////////////////////////////
