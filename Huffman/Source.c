@@ -224,9 +224,6 @@ void writeByte(FILE* out, unsigned char* bitBuffer, unsigned char bitCounter, un
 			counter++;
 			i--;
 		}
-		/*bit = (sym >> i) & 1;
-		*bitBuffer |= bit;
-		i--;*/
 		fwrite(bitBuffer, sizeof(unsigned char), 1, out);
 		*bitBuffer = 0;
 		counter = 0;
@@ -250,7 +247,7 @@ unsigned char printInfoAboutCoding(FILE* out, unsigned char  difSym, unsigned ch
 	unsigned char bitBuffer = 0;
 	unsigned char bitCounter = 0;
 	unsigned char countDifSym = 0;
-	for (char i = 0; countDifSym != difSym; i++) { // äåðåâî
+	for (char i = 1; countDifSym != difSym; i++) {
 		if (TreeRecration[i] == '1') {
 			i++;
 			bitBuffer |= 1;
@@ -271,8 +268,9 @@ unsigned char printInfoAboutCoding(FILE* out, unsigned char  difSym, unsigned ch
 		}
 		else {
 			bitBuffer |= 0;
-			bitBuffer <<= 1;
 			bitCounter++;
+			if (bitCounter != 8)
+				bitBuffer <<= 1;
 		}
 		if (bitCounter >= 8) {
 			writeByte(out, &bitBuffer, bitCounter, 1, false);
@@ -298,8 +296,7 @@ void printEncodedMessage(FILE* in, FILE* out, sEncode* EncodedValues, int lenght
 			unsigned char bit = EncodedValues[j].code[u] - '0';
 			bitBuffer |= bit;
 			if (bitCounter != 7) {
-				if (bitCounter != 0)
-					bitBuffer <<= 1;
+				bitBuffer <<= 1;
 				bitCounter++;
 			}
 			else {
@@ -315,12 +312,12 @@ void printEncodedMessage(FILE* in, FILE* out, sEncode* EncodedValues, int lenght
 		}
 	}
 	if (bitCounter != 0 && bitCounter != 8) {
-		bitBuffer <<= 8 - bitCounter;
+		bitBuffer <<= 7 - bitCounter;
 		fwrite(&bitBuffer, sizeof(unsigned char), 1, out);
 	}
 	if (bitCounter == 8)
 		fwrite(&bitBuffer, sizeof(unsigned char), 1, out);
-	fwrite(&bitCounter, sizeof(unsigned char), 1, out); // äëèí ïîñëåäíåãî áàéòà 
+	fwrite(&bitCounter, sizeof(unsigned char), 1, out); // 
 }
 
 void print(FILE* in, FILE* out, sEncode* EncodedValues, int lenght, unsigned char TreeRecration[], unsigned char difSym) {
@@ -352,7 +349,7 @@ void scanSym(FILE* in, unsigned char* sym, unsigned char bitCounter, unsigned ch
 	}
 }
 
-void crtDT(FILE* in, sTree* t, sTree* ancestor, unsigned char* countOfDifSym, unsigned char* bitCounter, unsigned char* byte, char direction, bool startFlag) {
+void crtDT(FILE* in, sTree* t, sTree* ancestor, unsigned char* bitCounter, unsigned char* byte, char direction, bool startFlag) {
 	if (!startFlag) {
 		if (*bitCounter == 8) {
 			fread(byte, 1, 1, in);
@@ -377,13 +374,14 @@ void crtDT(FILE* in, sTree* t, sTree* ancestor, unsigned char* countOfDifSym, un
 			unsigned char sym = 0;
 			scanSym(in, &sym, *bitCounter, byte);
 			t->value = sym;
-			(*countOfDifSym)--;
+			/*if (*bitCounter == 8)
+				*bitCounter = 0;*/
 			return;
 		}
 	}
 
-	crtDT(in, t->left, t, countOfDifSym, bitCounter, byte, LEFT, false);
-	crtDT(in, t->right, t, countOfDifSym, bitCounter, byte, RIGHT, false);
+	crtDT(in, t->left, t, bitCounter, byte, LEFT, false);
+	crtDT(in, t->right, t, bitCounter, byte, RIGHT, false);
 }
 
 sTree* createStartDecodingTree() {
@@ -401,13 +399,13 @@ sTree* fixTree(sTree* head) {
 	return head;
 }
 
-sTree* treeRestoration(FILE* in, unsigned char countOfDifSym, unsigned char* bitCounter, long* pos) {
+sTree* treeRestoration(FILE* in, unsigned char* bitCounter, long* pos) {
 	sTree* head = createStartDecodingTree();
 	unsigned char byte = 0;
 	fread(&byte, 1, 1, in);
-	crtDT(in, head, head, &countOfDifSym, bitCounter, &byte, LEFT, true);
-	head = fixTree(head);
-	*pos = ftell(in);
+	crtDT(in, head, head, bitCounter, &byte, LEFT, true);
+	//head = fixTree(head);
+	*pos = ftell(in) - 1;
 	return head;
 }
 
@@ -416,7 +414,6 @@ sTree* treeRestoration(FILE* in, unsigned char countOfDifSym, unsigned char* bit
 unsigned char findStartOfStartByte(FILE* in, unsigned char bitStart) {
 	unsigned char byte;
 	fread(&byte, 1, 1, in);
-	byte <<= bitStart - 1;
 	return byte;
 }
 
@@ -429,7 +426,7 @@ void printDecodeMessage(FILE* in, FILE* out, sTree* head, long startPos, long en
 		unsigned char byteLenght = 8;
 		if (i == startPos) {
 			byte = findStartOfStartByte(in, bitStart);
-			byteLenght = 7 - bitStart;
+			byteLenght = 8 - bitStart;
 		}
 		else
 			fread(&byte, 1, 1, in);
@@ -444,17 +441,17 @@ void printDecodeMessage(FILE* in, FILE* out, sTree* head, long startPos, long en
 				break;
 			}
 			if (buffHead->value != NOTNODE) {
-				fwrite(&buffHead->value, 1, 1, out);
+				fwrite(&buffHead->value,1, 1, out);
 				buffHead = head;
 			}
-
+			bit = 0;
 		}
 
 	}
 	if (lenghtOfLastBit > 0) {
 		fread(&byte, 1, 1, in);
 		for (int i = 0; i < lenghtOfLastBit; i++) {
-			bit = byte >> 7 - i;
+			bit |= (byte >> 7 - i) & 1;
 			switch (bit) {
 			case 0:
 				buffHead = buffHead->left;
@@ -467,8 +464,8 @@ void printDecodeMessage(FILE* in, FILE* out, sTree* head, long startPos, long en
 				fwrite(&buffHead->value, 1, 1, out);
 				buffHead = head;
 			}
+			bit = 0;
 		}
-
 	}
 
 }
@@ -476,7 +473,7 @@ void printDecodeMessage(FILE* in, FILE* out, sTree* head, long startPos, long en
 unsigned char scanLenghtLastBit(FILE* in, long* endPos, long startPos) {
 	unsigned char lenghtOfLastBit;
 	fseek(in, -1, SEEK_END);
-	*endPos = ftell(in);
+	*endPos = ftell(in) - 1;
 	fread(&lenghtOfLastBit, 1, 1, in);
 	fseek(in, startPos, SEEK_SET);
 	return lenghtOfLastBit;
@@ -515,6 +512,7 @@ void encodeMessage() {
 	unsigned char counterOfDifferentSymbols = countDifferentSymbols(NumberOfSymbolsIn);
 	searchForTheSameAmount(&NumberOfSymbolsIn, counterOfDifferentSymbols);
 	sTree* headTree = createCodingTree(NumberOfSymbolsIn, counterOfDifferentSymbols);
+
 	prefOrder(headTree, EncodedValues, 0, '0', TreeEdgeDirection, &TreeRecration, false);
 	sortEV(EncodedValues, counterOfDifferentSymbols);
 	print(stream.in, stream.out, EncodedValues, messageLenght, TreeRecration, counterOfDifferentSymbols);
@@ -525,13 +523,11 @@ void encodeMessage() {
 
 void decodeMessage() {
 	sStream stream;
-	unsigned char counterOfDifferentSymbols = 0;
 	unsigned char bitCounter = 0;
 	long pos;
 
 	fillStreamForDecoding(&stream);
-	//fread(&counterOfDifferentSymbols, 1, 1, stream.in);
-	sTree* head = treeRestoration(stream.in, counterOfDifferentSymbols, &bitCounter, &pos);
+	sTree* head = treeRestoration(stream.in, &bitCounter, &pos);
 	scanAndPrintDecodeMessage(stream.in, stream.out, head, pos, bitCounter);
 
 }
