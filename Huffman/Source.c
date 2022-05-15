@@ -102,11 +102,13 @@ void ShellSortForNumberOfSymbols(sRepeats* arr, int N) {
 			arr[j] = tmp;
 		}
 }
-unsigned char countDifferentSymbols(sRepeats arr[]) {
+int countDifferentSymbols(sRepeats arr[]) {
 	int i = 0;
 	for (; arr[i].amount != 0; i++)
 		if (i == UCHAR_MAX)
 			break;;
+	if (i == 255)
+		return 256;
 	return i;
 }
 
@@ -143,10 +145,10 @@ sTree* createCodingTree(sRepeats NumberOfSymbols[], int N) {
 	fillArrayOfTreeVertices(ArrayOfTreeVertices, NumberOfSymbols, SIZE + 2);
 	sTree* head = NULL;
 	int counter;
-	if (N < SIZE)
+	if (N < 255)
 		counter = N - 1;
 	else
-		counter = SIZE - 1;
+		counter = 255;
 	if (counter == 0)
 		return ArrayOfTreeVertices[counter];
 	while (counter) {
@@ -242,11 +244,11 @@ void writeByte(FILE* out, unsigned char* bitBuffer, unsigned char bitCounter, un
 	}
 }
 
-unsigned char printInfoAboutCoding(FILE* out, unsigned char  difSym, unsigned char TreeRecration[], unsigned char* count) {
+unsigned char printInfoAboutCoding(FILE* out, int  difSym, unsigned char TreeRecration[], unsigned char* count) {
 	unsigned char bit = 0;
 	unsigned char bitBuffer = 0;
 	unsigned char bitCounter = 0;
-	unsigned char countDifSym = 0;
+	int countDifSym = 0;
 	for (int i = 1; countDifSym != difSym; i++) {
 		if (TreeRecration[i] == '1') {
 			i++;
@@ -320,7 +322,7 @@ void printEncodedMessage(FILE* in, FILE* out, sEncode* EncodedValues, int lenght
 	fwrite(&bitCounter, sizeof(unsigned char), 1, out);
 }
 
-void print(FILE* in, FILE* out, sEncode* EncodedValues, int lenght, unsigned char TreeRecration[], unsigned char difSym) {
+void print(FILE* in, FILE* out, sEncode* EncodedValues, int lenght, unsigned char TreeRecration[], int difSym) {
 	unsigned char bitCounter = 0;
 	unsigned char bitBuffer = printInfoAboutCoding(out, difSym, TreeRecration, &bitCounter);
 	printEncodedMessage(in, out, EncodedValues, lenght, bitBuffer, bitCounter);
@@ -355,7 +357,6 @@ void crtDT(FILE* in, sTree* t, sTree* ancestor, unsigned char* bitCounter, unsig
 			fread(byte, 1, 1, in);
 			*bitCounter = 0;
 		}
-
 		sTree* node = (sTree*)malloc(sizeof(sTree));
 		node->left = NULL;
 		node->right = NULL;
@@ -412,7 +413,7 @@ void printDecodeMessage(FILE* in, FILE* out, sTree* head, long startPos, long en
 	unsigned char bit = 0;
 	bool flag = true;
 	sTree* buffHead = head;
-	for (int i = startPos; i < endPos; i++) {
+	for (int i = startPos; i < endPos || (i <= endPos && lenghtOfLastBit == 0); i++) {
 		unsigned char byteLenght = 8;
 		if (i == startPos) {
 			byte = findStartOfStartByte(in, bitStart);
@@ -506,7 +507,7 @@ void encodeMessage() {
 	fillStreamForEncoding(&stream);
 	fillNumberOfSymbolsIn(stream.in, &NumberOfSymbolsIn, &messageLenght);
 	ShellSortForNumberOfSymbols(&NumberOfSymbolsIn, SIZE);
-	unsigned char counterOfDifferentSymbols = countDifferentSymbols(NumberOfSymbolsIn);
+	int counterOfDifferentSymbols = countDifferentSymbols(NumberOfSymbolsIn);
 	searchForTheSameAmount(&NumberOfSymbolsIn, counterOfDifferentSymbols);
 	sTree* headTree = createCodingTree(NumberOfSymbolsIn, counterOfDifferentSymbols);
 
