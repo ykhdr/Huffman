@@ -1,4 +1,5 @@
 input.bin
+input.bin.bak
 output.bin
 outoutput.bin
 Huffman.vcxproj.user

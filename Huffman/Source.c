@@ -246,7 +246,6 @@ void writeByte(FILE* out, unsigned char* bitBuffer, unsigned char bitCounter, un
 }
 
 unsigned char printInfoAboutCoding(FILE* out, unsigned char  difSym, unsigned char TreeRecration[], unsigned char* count) {
-	fwrite(&difSym, sizeof(unsigned char), 1, out); // êîë-âî ðàçë ñèì
 	unsigned char bit = 0;
 	unsigned char bitBuffer = 0;
 	unsigned char bitCounter = 0;
@@ -355,8 +354,6 @@ void scanSym(FILE* in, unsigned char* sym, unsigned char bitCounter, unsigned ch
 
 void crtDT(FILE* in, sTree* t, sTree* ancestor, unsigned char* countOfDifSym, unsigned char* bitCounter, unsigned char* byte, char direction, bool startFlag) {
 	if (!startFlag) {
-		if (*countOfDifSym == 0)
-			return;
 		if (*bitCounter == 8) {
 			fread(byte, 1, 1, in);
 			*bitCounter = 0;
@@ -397,23 +394,84 @@ sTree* createStartDecodingTree() {
 	return head;
 }
 
-void fixTree(sTree* head) {
+sTree* fixTree(sTree* head) {
 	sTree* buff = head;
 	head = head->left;
 	free(buff);
+	return head;
 }
 
-sTree* treeRestoration(FILE* in, unsigned char countOfDifSym, unsigned char bitCounter, long* pos) {
+sTree* treeRestoration(FILE* in, unsigned char countOfDifSym, unsigned char* bitCounter, long* pos) {
 	sTree* head = createStartDecodingTree();
 	unsigned char byte = 0;
 	fread(&byte, 1, 1, in);
-	crtDT(in, head, head, &countOfDifSym, &bitCounter, &byte, LEFT, true);
-	fixTree(head);
+	crtDT(in, head, head, &countOfDifSym, bitCounter, &byte, LEFT, true);
+	head = fixTree(head);
 	*pos = ftell(in);
 	return head;
 }
 
 ////////////////////////////////// PRINT DECODE MESSAGE //////////////////////////////////
+
+unsigned char findStartOfStartByte(FILE* in, unsigned char bitStart) {
+	unsigned char byte;
+	fread(&byte, 1, 1, in);
+	byte <<= bitStart - 1;
+	return byte;
+}
+
+void printDecodeMessage(FILE* in, FILE* out, sTree* head, long startPos, long endPos, unsigned char bitStart, unsigned char lenghtOfLastBit) {
+	unsigned char byte = 0;
+	unsigned char bit = 0;
+
+	sTree* buffHead = head;
+	for (int i = startPos; i < endPos; i++) {
+		unsigned char byteLenght = 8;
+		if (i == startPos) {
+			byte = findStartOfStartByte(in, bitStart);
+			byteLenght = 7 - bitStart;
+		}
+		else
+			fread(&byte, 1, 1, in);
+		for (int u = 0; u < byteLenght; u++) {
+			bit |= byte >> ((byteLenght - 1) - u) & 1;
+			switch (bit) {
+			case 0:
+				buffHead = buffHead->left;
+				break;
+			case 1:
+				buffHead = buffHead->right;
+				break;
+			}
+			if (buffHead->value != NOTNODE) {
+				fwrite(&buffHead->value, 1, 1, out);
+				buffHead = head;
+			}
+
+		}
+
+	}
+	if (lenghtOfLastBit > 0) {
+		fread(&byte, 1, 1, in);
+		for (int i = 0; i < lenghtOfLastBit; i++) {
+			bit = byte >> 7 - i;
+			switch (bit) {
+			case 0:
+				buffHead = buffHead->left;
+				break;
+			case 1:
+				buffHead = buffHead->right;
+				break;
+			}
+			if (buffHead->value != NOTNODE) {
+				fwrite(&buffHead->value, 1, 1, out);
+				buffHead = head;
+			}
+		}
+
+	}
+
+}
 
 unsigned char scanLenghtLastBit(FILE* in, long* endPos, long startPos) {
 	unsigned char lenghtOfLastBit;
@@ -424,9 +482,10 @@ unsigned char scanLenghtLastBit(FILE* in, long* endPos, long startPos) {
 	return lenghtOfLastBit;
 }
 
-void scanAndPrintDecodeMessage(FILE* in, sTree* head, long startPos, unsigned char bitCounter) {
+void scanAndPrintDecodeMessage(FILE* in, FILE* out, sTree* head, long startPos, unsigned char bitCounter) {
 	long endPos;
 	unsigned char lenghtOfLastBit = scanLenghtLastBit(in, &endPos, startPos);
+	printDecodeMessage(in, out, head, startPos, endPos, bitCounter, lenghtOfLastBit);
 
 }
 
@@ -441,7 +500,6 @@ void freeTree(sTree* t) {
 }
 
 ///////////////////////////////////// MAIN FUNCTIONS /////////////////////////////////////
-
 
 void encodeMessage() {
 	int messageLenght = 0;
@@ -467,15 +525,15 @@ void encodeMessage() {
 
 void decodeMessage() {
 	sStream stream;
-	unsigned char counterOfDifferentSymbols;
+	unsigned char counterOfDifferentSymbols = 0;
 	unsigned char bitCounter = 0;
 	long pos;
 
-
 	fillStreamForDecoding(&stream);
-	fread(&counterOfDifferentSymbols, 1, 1, stream.in);
+	//fread(&counterOfDifferentSymbols, 1, 1, stream.in);
 	sTree* head = treeRestoration(stream.in, counterOfDifferentSymbols, &bitCounter, &pos);
-	scanAndPrintDecodeMessage(stream.in, head, pos, bitCounter);
+	scanAndPrintDecodeMessage(stream.in, stream.out, head, pos, bitCounter);
+
 }
 
 ///////////////////////////////////////// MAIN ///////////////////////////////////////////
@@ -495,7 +553,7 @@ int main(int argc, char* argv[]) {
 
 	encodeMessage();
 	decodeMessage();
-	
+
 	return 0;
 }
 
