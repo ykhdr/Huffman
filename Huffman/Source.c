@@ -4,12 +4,18 @@
 #include <malloc.h>
 #include <string.h>
 #include <stdbool.h>
+#include <stdlib.h>
+
 
 #define SIZE 256
 #define NOTNODE INT_MAX
 #define LEFT '0'
 #define RIGHT '1'
 #define TREERECRAIONSIZE 8*SIZE+1
+#define COUNTARGMINERROR '0'
+#define COUNTARGMAXERROR '1'
+#define PARAMERROR '2'
+#define HELP '3'
 
 typedef struct stream_s {
 	FILE* in;
@@ -494,6 +500,55 @@ void freeTree(sTree* t) {
 	free(t);
 }
 
+void errorPrint(char caseError) {
+	if (caseError == COUNTARGMINERROR)
+		fprintf(stdout, "	Введено меньше 3 параметров.\n	Для работы программы необходимо ввести:\n		-[ax]   : направление работы архиватора (архивация/деархивация)\n		fileOut : выходной файл\n		fileIn  : входной файл\n\n");
+
+	if (caseError == COUNTARGMAXERROR)
+		fprintf(stdout, "	Введено больше 4 параметров.\n	Для работы программы необходимо ввести:\n		-[ax]   : направление работы архиватора (архивация/деархивация)\n		fileOut : выходной файл\n		fileIn  : входной файл\n\n");
+
+	if (caseError == PARAMERROR)
+		fprintf(stdout, "	Неправильно введен параметр.\n	Доступные параметры:\n		-a : архивация файла\n		-x : деархивация файла\n\n");
+
+	if (caseError == HELP)
+		fprintf(stdout, "	Для работы программы необходимо ввести:\n		-[ax]   : направление работы архиватора (архивация/деархивация)\n		fileOut : выходной файл\n		fileIn  : входной файл\n\n");
+
+	system("pause");
+}
+
+bool checkInput(int argc, char* argv[], int* i) {
+	if (!strcmp(argv[1], "-help")) {
+		errorPrint(HELP);
+		return EXIT_FAILURE;
+	}
+	if (argc < 4) {
+		errorPrint(COUNTARGMINERROR);
+		return EXIT_FAILURE;
+	}
+	if (argc == 4) {
+		if (argv[1][0] != '-' && (argv[1][1] != 'a' || argv[1][1] != 'x')) {
+			errorPrint(PARAMERROR);
+			return EXIT_FAILURE;
+		}
+	}
+	if (argc == 5) {
+		if (argv[1][0] != '-' && (argv[1][1] != 'a' || argv[1][1] != 'x')) {
+			errorPrint(PARAMERROR);
+			return EXIT_FAILURE;
+		}
+		if (argv[2][0] != '-' && (argv[2][1] != 'a' || argv[2][1] != 'x')) {
+			errorPrint(PARAMERROR);
+			return EXIT_FAILURE;
+		}
+		*i = 2;
+	}
+	if (argc > 5) {
+		errorPrint(COUNTARGMAXERROR);
+		return EXIT_FAILURE;
+	}
+	return EXIT_SUCCESS;
+}
+
 ///////////////////////////////////// MAIN FUNCTIONS /////////////////////////////////////
 
 void encodeMessage() {
@@ -533,21 +588,24 @@ void decodeMessage() {
 ///////////////////////////////////////// MAIN ///////////////////////////////////////////
 
 int main(int argc, char* argv[]) {
-
-	/*switch (argv[1][0])
-	{
-	case 'a':
-		encodeMessage();
-		break;
-	case 'x':
-		break;
-	default:
-		break;
-	}*/
-
-	encodeMessage();
-	decodeMessage();
-
-	return 0;
+	setlocale(LC_ALL, "rus");
+	int paramsCount = 1;
+	if (checkInput(argc, argv, &paramsCount))
+		return 0;
+	for (int i = 1; i <= paramsCount; i++) {
+		switch (argv[i][1]) {
+		case 'a':
+			encodeMessage(argv[3 + paramsCount - 1], argv[2 + paramsCount - 1]);
+			break;
+		case 'x':
+			decodeMessage(argv[3 + paramsCount - 1], argv[2 + paramsCount - 1]);
+			break;
+		default:
+			errorPrint(PARAMERROR);
+			return 0;
+			break;
+		}
+	}
+	return EXIT_SUCCESS;
 }
 
