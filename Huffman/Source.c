@@ -1,5 +1,7 @@
 ﻿#define _CRT_SECURE_NO_WARNINGS
 #include <stdio.h>
+#include <stdlib.h>
+#include <locale.h>
 #include <limits.h>
 #include <malloc.h>
 #include <string.h>
@@ -10,6 +12,10 @@
 #define LEFT '0'
 #define RIGHT '1'
 #define TREERECRAIONSIZE 8*SIZE+1
+#define COUNTARGMINERROR '0'
+#define COUNTARGMAXERROR '1'
+#define PARAMERROR '2'
+#define HELP '3'
 
 typedef struct stream_s {
 	FILE* in;
@@ -36,26 +42,15 @@ typedef struct encode_s {
 
 /////////////////////////////////// INPUT && OUTPUT ///////////////////////////////////
 
-void fillStreamForEncoding(sStream* stream) {
-	stream->in = fopen("input.bin", "rb");
-	stream->out = fopen("output.bin", "wb");
+void fillStreams(sStream* stream, char* fileIn, char* fileOut) {
+	stream->in = fopen(fileIn, "rb");
+	stream->out = fopen(fileOut, "wb");
 }
 
-void fillStreamForDecoding(sStream* stream) {
-	stream->in = fopen("output.bin", "rb");
-	stream->out = fopen("outoutput.bin", "wb");
-}
-
-void closeStreamForEncoding(sStream* stream) {
+void closeStream(sStream* stream) {
 	fclose(stream->in);
 	fclose(stream->out);
 }
-
-void closeStreamForDecoding(sStream* stream) {
-	fclose(stream->in);
-	fclose(stream->out);
-}
-
 
 ///////////////////////////////////// SCAN MESSAGE //////////////////////////////////////
 
@@ -494,18 +489,66 @@ void freeTree(sTree* t) {
 	free(t);
 }
 
+void errorPrint(char caseError) {
+	if (caseError == COUNTARGMINERROR)
+		fprintf(stdout, "	Введено меньше 3 параметров.\n	Для работы программы необходимо ввести:\n		-[ax]   : направление работы архиватора (архивация/деархивация)\n		fileOut : выходной файл\n		fileIn  : входной файл\n\n");
+	
+	if (caseError == COUNTARGMAXERROR)
+		fprintf(stdout, "	Введено больше 4 параметров.\n	Для работы программы необходимо ввести:\n		-[ax]   : направление работы архиватора (архивация/деархивация)\n		fileOut : выходной файл\n		fileIn  : входной файл\n\n");
+	
+	if (caseError == PARAMERROR)
+		fprintf(stdout, "	Неправильно введен параметр.\n	Доступные параметры:\n		-a : архивация файла\n		-x : деархивация файла\n\n");
+	
+	if (caseError == HELP)
+		fprintf(stdout, "	Для работы программы необходимо ввести:\n		-[ax]   : направление работы архиватора (архивация/деархивация)\n		fileOut : выходной файл\n		fileIn  : входной файл\n\n");
+
+	system("pause");
+}
+
+bool checkInput(int argc, char* argv[], int* i) {
+	if (!strcmp(argv[1], "-help")) {
+		errorPrint(HELP);
+		return EXIT_FAILURE;
+	}
+	if (argc < 4) {
+		errorPrint(COUNTARGMINERROR);
+		return EXIT_FAILURE;
+	}
+	if (argc == 4) {
+		if (argv[1][0] != '-' && (argv[1][1] != 'a' || argv[1][1] != 'x')) {
+			errorPrint(PARAMERROR);
+			return EXIT_FAILURE;
+		}
+	}
+	if (argc == 5) {
+		if (argv[1][0] != '-' && (argv[1][1] != 'a' || argv[1][1] != 'x')) {
+			errorPrint(PARAMERROR);
+			return EXIT_FAILURE;
+		}
+		if (argv[2][0] != '-' && (argv[2][1] != 'a' || argv[2][1] != 'x')) {
+			errorPrint(PARAMERROR);
+			return EXIT_FAILURE;
+		}
+		*i = 2;
+	}
+	if (argc > 5) {
+		errorPrint(COUNTARGMAXERROR);
+		return EXIT_FAILURE;
+	}
+}
+
 ///////////////////////////////////// MAIN FUNCTIONS /////////////////////////////////////
 
-void encodeMessage() {
+void encodeMessage(char* fileIn, char* fileOut) {
 	int messageLenght = 0;
-	sStream stream;
+	sStream streams;
 	sRepeats NumberOfSymbolsIn[SIZE];
 	sEncode* EncodedValues = (sEncode*)malloc(sizeof(sEncode) * SIZE);
 	unsigned char TreeEdgeDirection[SIZE] = { 0 };
 	unsigned char TreeRecration[TREERECRAIONSIZE];
 
-	fillStreamForEncoding(&stream);
-	fillNumberOfSymbolsIn(stream.in, &NumberOfSymbolsIn, &messageLenght);
+	fillStreams(&streams, fileIn, fileOut);
+	fillNumberOfSymbolsIn(streams.in, &NumberOfSymbolsIn, &messageLenght);
 	ShellSortForNumberOfSymbols(&NumberOfSymbolsIn, SIZE);
 	int counterOfDifferentSymbols = countDifferentSymbols(NumberOfSymbolsIn);
 	searchForTheSameAmount(&NumberOfSymbolsIn, counterOfDifferentSymbols);
@@ -513,41 +556,45 @@ void encodeMessage() {
 
 	prefOrder(headTree, EncodedValues, 0, '0', TreeEdgeDirection, &TreeRecration, false);
 	sortEV(EncodedValues, counterOfDifferentSymbols);
-	print(stream.in, stream.out, EncodedValues, messageLenght, TreeRecration, counterOfDifferentSymbols);
+	print(streams.in, streams.out, EncodedValues, messageLenght, TreeRecration, counterOfDifferentSymbols);
 	free(EncodedValues);
 	freeTree(headTree);
-	closeStreamForEncoding(&stream);
+	closeStream(&streams);
 }
 
-void decodeMessage() {
-	sStream stream;
+void decodeMessage(char* fileIn, char* fileOut) {
+	sStream streams;
 	unsigned char bitCounter = 0;
 	long pos;
 
-	fillStreamForDecoding(&stream);
-	sTree* head = treeRestoration(stream.in, &bitCounter, &pos);
-	scanAndPrintDecodeMessage(stream.in, stream.out, head, pos, bitCounter);
+	fillStreams(&streams, fileIn, fileOut);
+	sTree* head = treeRestoration(streams.in, &bitCounter, &pos);
+	scanAndPrintDecodeMessage(streams.in, streams.out, head, pos, bitCounter);
 	freeTree(head);
+	closeStream(&streams);
 }
 
 ///////////////////////////////////////// MAIN ///////////////////////////////////////////
 
 int main(int argc, char* argv[]) {
-
-	/*switch (argv[1][0])
-	{
-	case 'a':
-		encodeMessage();
-		break;
-	case 'x':
-		break;
-	default:
-		break;
-	}*/
-
-	encodeMessage();
-	decodeMessage();
-
+	setlocale(LC_ALL, "rus");
+	int paramsCount = 1;
+	if (checkInput(argc, argv, &paramsCount))
+		return 0;
+	for (int i = 1; i <= paramsCount; i++) {
+		switch (argv[i][1]) {
+		case 'a':
+			encodeMessage(argv[3 + paramsCount - 1], argv[2 + paramsCount - 1]);
+			break;
+		case 'x':
+			decodeMessage(argv[3 + paramsCount - 1], argv[2 + paramsCount - 1]);
+			break;
+		default:
+			errorPrint(PARAMERROR);
+			return 0;
+			break;
+		}
+	}
 	return 0;
 }
 
