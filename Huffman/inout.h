@@ -9,3 +9,4 @@ void fillStreams(sStream* stream, char* fileIn, char* fileOut);
 void closeStream(sStream* stream);
 void errorPrint(char caseError);
 bool checkInput(int argc, char* argv[], int* i);
+void successfulExitPrint(char* argv);

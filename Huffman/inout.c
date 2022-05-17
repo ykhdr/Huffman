@@ -11,19 +11,49 @@ void closeStream(sStream* stream) {
 }
 
 void errorPrint(char caseError) {
-	if (caseError == COUNTARGMINERROR)
-		fprintf(stdout, "	Введено меньше 3 параметров.\n	Для работы программы необходимо ввести:\n		-[ax]   : направление работы архиватора (архивация/деархивация)\n		fileOut : выходной файл\n		fileIn  : входной файл\n\n");
-
-	if (caseError == COUNTARGMAXERROR)
-		fprintf(stdout, "	Введено больше 4 параметров.\n	Для работы программы необходимо ввести:\n		-[ax]   : направление работы архиватора (архивация/деархивация)\n		fileOut : выходной файл\n		fileIn  : входной файл\n\n");
-
-	if (caseError == PARAMERROR)
-		fprintf(stdout, "	Неправильно введен параметр.\n	Доступные параметры:\n		-a : архивация файла\n		-x : деархивация файла\n\n");
-
-	if (caseError == HELP)
-		fprintf(stdout, "	Для работы программы необходимо ввести:\n		-[ax]   : направление работы архиватора (архивация/деархивация)\n		fileOut : выходной файл\n		fileIn  : входной файл\n\n");
+	switch (caseError)
+	{
+	case COUNTARGMINERROR:
+		fprintf(stdout, "\n\
+		Введено меньше 3 параметров.\n\
+		Для работы программы необходимо ввести:\n\
+		-[ax]   : направление работы архиватора (архивация/деархивация)\n\
+		fileIn  : входной файл\n\
+		fileOut : выходной файл\n\n");
+		break;
+	case COUNTARGMAXERROR:
+		fprintf(stdout, "\n\
+		Введено больше 5 параметров.\n\
+		Для работы программы необходимо ввести:\n\
+		-[ax]   : направление работы архиватора (архивация/деархивация)\n\
+		fileIn  : входной файл\n\
+		fileOut : выходной файл\n\n");
+		break;
+	case PARAMERROR:
+		fprintf(stdout, "\n\
+		Неправильно введен параметр.\n\
+		Доступные параметры:\n\
+		-a : архивация файла\n\
+		-x : деархивация файла\n\n");
+		break;
+	case HELP:
+		fprintf(stdout, "\n\
+		Для работы программы необходимо ввести:\n\
+		-[ax]   : направление работы архиватора (архивация/деархивация)\n\
+		fileIn  : входной файл\n\
+		fileOut : выходной файл\n\n");
+		break;
+	default:
+		break;
+	}
 
 	system("pause");
+}
+
+void successfulExitPrint(char* argv) {
+	fprintf(stdout, "\n\
+		Программа успешно завершила работу.\n\
+		Результат находится в файле %s\n", argv);
 }
 
 bool checkInput(int argc, char* argv[], int* i) {
@@ -41,7 +71,7 @@ bool checkInput(int argc, char* argv[], int* i) {
 			return EXIT_FAILURE;
 		}
 	}
-	if (argc == 5) {
+	if (argc == 6) {
 		if (argv[1][0] != '-' && (argv[1][1] != 'a' || argv[1][1] != 'x')) {
 			errorPrint(PARAMERROR);
 			return EXIT_FAILURE;
@@ -52,7 +82,7 @@ bool checkInput(int argc, char* argv[], int* i) {
 		}
 		*i = 2;
 	}
-	if (argc > 5) {
+	if (argc > 6) {
 		errorPrint(COUNTARGMAXERROR);
 		return EXIT_FAILURE;
 	}

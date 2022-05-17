@@ -7,26 +7,26 @@
 #include "encoding.h"
 #include "decoding.h"
 
-
 int main(int argc, char* argv[]) {
 	setlocale(LC_ALL, "rus");
 	int paramsCount = 1;
 	if (checkInput(argc, argv, &paramsCount))
-		return 0;
+		return EXIT_SUCCESS;
 	for (int i = 1; i <= paramsCount; i++) {
 		switch (argv[i][1]) {
 		case 'a':
-			encodeMessage(argv[3 + paramsCount - 1], argv[2 + paramsCount - 1]);
+			encodeMessage(argv[2 + paramsCount + i - 2], argv[3 + paramsCount + i - 2]);
 			break;
 		case 'x':
-			decodeMessage(argv[3 + paramsCount - 1], argv[2 + paramsCount - 1]);
+			decodeMessage(argv[2 + paramsCount + i - 2], argv[3 + paramsCount + i - 2]);
 			break;
 		default:
 			errorPrint(PARAMERROR);
-			return 0;
+			return EXIT_FAILURE;
 			break;
 		}
 	}
-	return 0;
+	successfulExitPrint(argv[argc - 1]);
+	return EXIT_SUCCESS;
 }
 
