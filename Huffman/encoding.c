@@ -15,6 +15,7 @@ void fillNumberOfSymbolsIn(FILE* in, sRepeats* NumberOfSymbols, int* N) {
 	*N = i;
 	fseek(in, -i, SEEK_CUR);
 }
+
 void swapForNumberOfSymbols(sRepeats* arr, int i, int j) {
 	sRepeats buff = arr[i];
 	arr[i] = arr[j];
@@ -45,6 +46,7 @@ void ShellSortForNumberOfSymbols(sRepeats* arr, int N) {
 			arr[j] = tmp;
 		}
 }
+
 int countDifferentSymbols(sRepeats arr[]) {
 	int i = 0;
 	for (; arr[i].amount != 0; i++)
@@ -54,7 +56,6 @@ int countDifferentSymbols(sRepeats arr[]) {
 		return 256;
 	return i;
 }
-
 
 ////////////////////////////////////// CREATE TREE ///////////////////////////////////////
 
@@ -279,7 +280,7 @@ void freeTreeForEncoding(sTree* t) {
 	free(t);
 }
 
-void encodeMessage(char* fileIn, char* fileOut) {
+bool encodeMessage(char* fileIn, char* fileOut) {
 	int messageLenght = 0;
 	sStream streams;
 	sRepeats NumberOfSymbolsIn[SIZE];
@@ -287,17 +288,23 @@ void encodeMessage(char* fileIn, char* fileOut) {
 	unsigned char TreeEdgeDirection[SIZE] = { 0 };
 	unsigned char TreeRecration[TREERECRAIONSIZE];
 
-	fillStreams(&streams, fileIn, fileOut);
+	char streamsStatus = fillStreams(&streams, fileIn, fileOut);
+	if (streamsStatus != SUCCESS) {
+		errorPrint(streamsStatus);
+		return EXIT_FAILURE;
+	}
+
 	fillNumberOfSymbolsIn(streams.in, &NumberOfSymbolsIn, &messageLenght);
 	ShellSortForNumberOfSymbols(&NumberOfSymbolsIn, SIZE);
 	int counterOfDifferentSymbols = countDifferentSymbols(NumberOfSymbolsIn);
 	searchForTheSameAmount(&NumberOfSymbolsIn, counterOfDifferentSymbols);
 	sTree* headTree = createCodingTree(NumberOfSymbolsIn, counterOfDifferentSymbols);
-
 	prefOrder(headTree, EncodedValues, 0, '0', TreeEdgeDirection, &TreeRecration, false);
 	sortEV(EncodedValues, counterOfDifferentSymbols);
 	print(streams.in, streams.out, EncodedValues, messageLenght, TreeRecration, counterOfDifferentSymbols);
 	free(EncodedValues);
 	freeTreeForEncoding(headTree);
 	closeStream(&streams);
+
+	return EXIT_SUCCESS;
 }

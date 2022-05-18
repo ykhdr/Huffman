@@ -9,10 +9,13 @@
 #define LEFT '0'
 #define RIGHT '1'
 #define TREERECRAIONSIZE 8*SIZE+1
-#define COUNTARGMINERROR '0'
-#define COUNTARGMAXERROR '1'
-#define PARAMERROR '2'
-#define HELP '3'
+#define SUCCESS '0'
+#define COUNTARGMINERROR '1'
+#define COUNTARGMAXERROR '2'
+#define PARAMERROR '3'
+#define HELP '4'
+#define STREAMINERROR '5'
+#define STREAMOUTERROR '6'
 
 typedef struct stream_s {
 	FILE* in;

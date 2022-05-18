@@ -13,4 +13,4 @@ void printDecodeMessage(FILE* in, FILE* out, sTree* head, long startPos, long en
 unsigned char scanLenghtLastBit(FILE* in, long* endPos, long startPos);
 void scanAndPrintDecodeMessage(FILE* in, FILE* out, sTree* head, long startPos, unsigned char bitCounter);
 void freeTreeForDecoding(sTree* t);
-void decodeMessage(char* fileIn, char* fileOut);
+bool decodeMessage(char* fileIn, char* fileOut);

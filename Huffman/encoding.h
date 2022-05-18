@@ -24,4 +24,5 @@ unsigned char printInfoAboutCoding(FILE* out, int  difSym, unsigned char TreeRec
 void printEncodedMessage(FILE* in, FILE* out, sEncode* EncodedValues, int lenght, unsigned char bitBuffer, unsigned char bitCounter);
 void print(FILE* in, FILE* out, sEncode* EncodedValues, int lenght, unsigned char TreeRecration[], int difSym);
 void freeTreeForEncoding(sTree* t);
-void encodeMessage(char* fileIn, char* fileOut);
+
+bool encodeMessage(char* fileIn, char* fileOut);

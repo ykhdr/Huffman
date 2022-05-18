@@ -9,22 +9,21 @@
 
 int main(int argc, char* argv[]) {
 	setlocale(LC_ALL, "rus");
-	int paramsCount = 1;
-	if (checkInput(argc, argv, &paramsCount))
+	if (checkInput(argc, argv))
 		return EXIT_SUCCESS;
-	for (int i = 1; i <= paramsCount; i++) {
-		switch (argv[i][1]) {
-		case 'a':
-			encodeMessage(argv[2 + paramsCount + i - 2], argv[3 + paramsCount + i - 2]);
-			break;
-		case 'x':
-			decodeMessage(argv[2 + paramsCount + i - 2], argv[3 + paramsCount + i - 2]);
-			break;
-		default:
-			errorPrint(PARAMERROR);
-			return EXIT_FAILURE;
-			break;
-		}
+	switch (argv[1][1]) {
+	case 'a':
+		if (encodeMessage(argv[2], argv[3]))
+			return EXIT_SUCCESS;
+		break;
+	case 'x':
+		if (decodeMessage(argv[2], argv[3]))
+			return EXIT_SUCCESS;
+		break;
+	default:
+		errorPrint(PARAMERROR);
+		return EXIT_SUCCESS;
+		break;
 	}
 	successfulExitPrint(argv[argc - 1]);
 	return EXIT_SUCCESS;

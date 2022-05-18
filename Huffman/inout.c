@@ -1,8 +1,12 @@
 #include "inout.h"
 
-void fillStreams(sStream* stream, char* fileIn, char* fileOut) {
-	stream->in = fopen(fileIn, "rb");
-	stream->out = fopen(fileOut, "wb");
+
+char fillStreams(sStream* stream, char* fileIn, char* fileOut) {
+	if ((stream->in = fopen(fileIn, "rb")) == NULL)
+		return STREAMINERROR;
+	if ((stream->out = fopen(fileOut, "wb")) == NULL)
+		return STREAMOUTERROR;
+	return SUCCESS;
 }
 
 void closeStream(sStream* stream) {
@@ -11,8 +15,7 @@ void closeStream(sStream* stream) {
 }
 
 void errorPrint(char caseError) {
-	switch (caseError)
-	{
+	switch (caseError) {
 	case COUNTARGMINERROR:
 		fprintf(stdout, "\n\
 		Введено меньше 3 параметров.\n\
@@ -23,7 +26,7 @@ void errorPrint(char caseError) {
 		break;
 	case COUNTARGMAXERROR:
 		fprintf(stdout, "\n\
-		Введено больше 5 параметров.\n\
+		Введено больше 3 параметров.\n\
 		Для работы программы необходимо ввести:\n\
 		-[ax]   : направление работы архиватора (архивация/деархивация)\n\
 		fileIn  : входной файл\n\
@@ -43,10 +46,19 @@ void errorPrint(char caseError) {
 		fileIn  : входной файл\n\
 		fileOut : выходной файл\n\n");
 		break;
-	default:
+	case STREAMINERROR:
+		fprintf(stdout, "\n\
+		Неправильно введен путь к входному файлу.\n\
+		Повторите попытку с корректным путем.\n\n");
 		break;
+	case STREAMOUTERROR:
+		fprintf(stdout, "\n\
+		Неправильно введен путь к выходному файлу.\n\
+		Повторите попытку с корректным путем.\n\n");
+		break;
+	default:
+		return;
 	}
-
 	system("pause");
 }
 
@@ -56,13 +68,13 @@ void successfulExitPrint(char* argv) {
 		Результат находится в файле %s\n", argv);
 }
 
-bool checkInput(int argc, char* argv[], int* i) {
-	if (!strcmp(argv[1], "-help")) {
-		errorPrint(HELP);
-		return EXIT_FAILURE;
-	}
+bool checkInput(int argc, char* argv[]) {
 	if (argc < 4) {
 		errorPrint(COUNTARGMINERROR);
+		return EXIT_FAILURE;
+	}
+	if (!strcmp(argv[1], "-help")) {
+		errorPrint(HELP);
 		return EXIT_FAILURE;
 	}
 	if (argc == 4) {
@@ -71,18 +83,7 @@ bool checkInput(int argc, char* argv[], int* i) {
 			return EXIT_FAILURE;
 		}
 	}
-	if (argc == 6) {
-		if (argv[1][0] != '-' && (argv[1][1] != 'a' || argv[1][1] != 'x')) {
-			errorPrint(PARAMERROR);
-			return EXIT_FAILURE;
-		}
-		if (argv[2][0] != '-' && (argv[2][1] != 'a' || argv[2][1] != 'x')) {
-			errorPrint(PARAMERROR);
-			return EXIT_FAILURE;
-		}
-		*i = 2;
-	}
-	if (argc > 6) {
+	if (argc > 4) {
 		errorPrint(COUNTARGMAXERROR);
 		return EXIT_FAILURE;
 	}

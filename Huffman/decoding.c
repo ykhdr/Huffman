@@ -163,14 +163,21 @@ void freeTreeForDecoding(sTree* t) {
 	free(t);
 }
 
-void decodeMessage(char* fileIn, char* fileOut) {
+bool decodeMessage(char* fileIn, char* fileOut) {
 	sStream streams;
 	unsigned char bitCounter = 0;
 	long pos;
 
-	fillStreams(&streams, fileIn, fileOut);
+	char streamsStatus = fillStreams(&streams, fileIn, fileOut);
+	if (streamsStatus != SUCCESS) {
+		errorPrint(streamsStatus);
+		return EXIT_FAILURE;
+	}
+
 	sTree* head = treeRestoration(streams.in, &bitCounter, &pos);
 	scanAndPrintDecodeMessage(streams.in, streams.out, head, pos, bitCounter);
 	freeTreeForDecoding(head);
 	closeStream(&streams);
+
+	return EXIT_SUCCESS;
 }
