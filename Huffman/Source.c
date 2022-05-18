@@ -23,7 +23,6 @@ int main(int argc, char* argv[]) {
 	default:
 		errorPrint(PARAMERROR);
 		return EXIT_SUCCESS;
-		break;
 	}
 	successfulExitPrint(argv[argc - 1]);
 	return EXIT_SUCCESS;
