@@ -16,6 +16,7 @@
 #define HELP '4'
 #define STREAMINERROR '5'
 #define STREAMOUTERROR '6'
+#define SAMEINOUTERROR '7'
 
 typedef struct stream_s {
 	FILE* in;

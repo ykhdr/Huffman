@@ -16,6 +16,13 @@ void closeStream(sStream* stream) {
 
 void errorPrint(char caseError) {
 	switch (caseError) {
+	case HELP:
+		fprintf(stdout, "\n\
+		Для работы программы необходимо ввести:\n\
+		-[ax]   : направление работы архиватора (архивация/деархивация)\n\
+		fileIn  : входной файл\n\
+		fileOut : выходной файл\n\n");
+		break;
 	case COUNTARGMINERROR:
 		fprintf(stdout, "\n\
 		Введено меньше 3 параметров.\n\
@@ -39,13 +46,6 @@ void errorPrint(char caseError) {
 		-a : архивация файла\n\
 		-x : деархивация файла\n\n");
 		break;
-	case HELP:
-		fprintf(stdout, "\n\
-		Для работы программы необходимо ввести:\n\
-		-[ax]   : направление работы архиватора (архивация/деархивация)\n\
-		fileIn  : входной файл\n\
-		fileOut : выходной файл\n\n");
-		break;
 	case STREAMINERROR:
 		fprintf(stdout, "\n\
 		Неправильно введен путь к входному файлу.\n\
@@ -55,6 +55,11 @@ void errorPrint(char caseError) {
 		fprintf(stdout, "\n\
 		Неправильно введен путь к выходному файлу.\n\
 		Повторите попытку с корректным путем.\n\n");
+		break;
+	case SAMEINOUTERROR:
+		fprintf(stdout, "\n\
+		Местоположение файлов FileIn и FileOut совпадает.\n\
+		Повторите попытку с различными файлами.\n\n");
 		break;
 	default:
 		return;
@@ -69,12 +74,12 @@ void successfulExitPrint(char* argv) {
 }
 
 bool checkInput(int argc, char* argv[]) {
-	if (argc < 4) {
-		errorPrint(COUNTARGMINERROR);
-		return EXIT_FAILURE;
-	}
 	if (!strcmp(argv[1], "-help")) {
 		errorPrint(HELP);
+		return EXIT_FAILURE;
+	}
+	if (argc < 4) {
+		errorPrint(COUNTARGMINERROR);
 		return EXIT_FAILURE;
 	}
 	if (argc == 4) {
@@ -87,5 +92,12 @@ bool checkInput(int argc, char* argv[]) {
 		errorPrint(COUNTARGMAXERROR);
 		return EXIT_FAILURE;
 	}
+
+	if (!strcmp(argv[2], argv[3])) {
+		errorPrint(SAMEINOUTERROR);
+		return EXIT_FAILURE;
+	}
+
+
 	return EXIT_SUCCESS;
 }
